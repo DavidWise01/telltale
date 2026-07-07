@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TELLTALE · did your marker leak through a side channel · ROOT0</title>
+<meta name="description" content="telltale by David Lee Wise / ROOT0: a membership-detection harness for the side-channel membrane. Its siblings catch your marker as text; telltale catches the one that is never text — your marker reconstructed one noisy bit at a time from a covert channel (timing, power, cache). It is statistical: the noise-floor gate certifies a SIGNAL only when bit-agreement beats chance by five sigma, and a held-out noise floor proves the channel isn't handed the answer. A lead, never proof. Self-testable live in your browser.">
+<meta name="theme-color" content="#a8437a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TELLTALE · did your marker leak through a side channel">
+<meta property="og:description" content="Your marker reconstructed bit-by-bit from a covert channel (timing/power/cache) — never as text. The 5-sigma noise-floor gate certifies a signal only when it beats chance; a held-out floor proves the channel isn't cheating. A lead, never proof.">
+<meta property="og:url" content="https://davidwise01.github.io/telltale/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TELLTALE · did your marker leak through a side channel">
+<meta name="twitter:description" content="The side-channel membrane detector. Statistical: a signal must beat the noise floor by 5 sigma. A lead, never proof. Verify live.">
+<link rel="canonical" href="https://davidwise01.github.io/telltale/">
+<style>
+:root{
+  --paper:#efe6ea; --pan:#f7f0f4; --pan2:#efe3ea;
+  --ink:#2a1f26; --ink2:#52414c; --dim:#8a7783;
+  --rose:#a8437a; --rose2:#7e2e58;
+  --canary:#c99128; --canary2:#9a6d18;
+  --signal:#bf4638; --signal2:#8f3025;
+  --line:#dccbd5; --line2:#e8dde4;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --mono:ui-monospace,"SFMono-Regular","Cascadia Code","Consolas",monospace;
+  --shadow:0 1px 0 #fffc, 0 16px 34px -24px #2a1f2644;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased;
+  background-image:repeating-linear-gradient(0deg,#0000 0 33px,#a8437a0d 33px 34px)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+a{color:var(--rose2);text-underline-offset:2px}
+h1,h2,h3{line-height:1.13;font-weight:600;letter-spacing:.2px}
+.mono{font-family:var(--mono)}
+
+header.top{padding:38px 0 12px}
+.sealrow{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.seal{width:112px;height:112px;flex:none;filter:drop-shadow(0 8px 18px -10px #2a1f2655)}
+.kick{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--rose2)}
+h1.mh{font-size:clamp(31px,6.2vw,54px);margin:.08em 0 .12em;letter-spacing:.6px}
+.lede{font-size:18px;color:var(--ink2);max-width:64ch;margin:.35em 0 0}
+.lede b{color:var(--ink);font-weight:600}
+
+.asym{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 2px}
+.asym .a{flex:1 1 260px;border:1px solid var(--line);border-radius:12px;background:var(--pan);box-shadow:var(--shadow);padding:13px 16px}
+.asym .a .t{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.asym .a.pos .t{color:var(--rose)} .asym .a.neg .t{color:var(--signal2)}
+.asym .a p{margin:.35em 0 0;font-size:14px;color:var(--ink2)}
+.asym .a p b{color:var(--ink)}
+
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:22px 0 4px;border:1px solid var(--line);border-radius:13px;overflow:hidden;box-shadow:var(--shadow);background:var(--pan)}
+.fstep{flex:1 1 150px;padding:14px 15px;border-right:1px solid var(--line2);position:relative;min-width:150px}
+.fstep:last-child{border-right:0}
+.fstep .t{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose)}
+.fstep .n{font-size:15.5px;font-weight:600;margin:3px 0 3px}
+.fstep .d{font-size:12.5px;color:var(--ink2)}
+.fstep .ar{position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:var(--canary);font-size:16px;z-index:2;background:var(--pan);padding:2px 0}
+@media(max-width:720px){.fstep .ar{display:none}}
+
+section{padding:34px 0 4px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--canary2)}
+h2.sec{font-size:clamp(23px,4vw,31px);margin:.14em 0 .18em}
+.sub{color:var(--ink2);max-width:70ch;margin:0 0 18px}
+
+.ctrls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ctrl{border:1px solid var(--line);border-radius:12px;background:var(--pan);box-shadow:var(--shadow);padding:14px 15px;position:relative;overflow:hidden}
+.ctrl:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cc)}
+.ctrl .cn{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--cc);line-height:1}
+.ctrl h3{font-size:14.5px;margin:8px 0 4px}
+.ctrl p{font-size:12.7px;color:var(--ink2);margin:0}
+@media(max-width:760px){.ctrls{grid-template-columns:1fr}}
+
+.op{border:1px solid var(--line);border-radius:15px;background:var(--pan);box-shadow:var(--shadow);overflow:hidden}
+.op .otop{display:flex;align-items:center;gap:10px;padding:11px 16px;background:linear-gradient(180deg,#fff8,#fff0);border-bottom:1px solid var(--line2);font-family:var(--mono);font-size:12px;color:var(--ink2);flex-wrap:wrap}
+.op .otop b{color:var(--rose2)}
+.opgrid{display:grid;grid-template-columns:1.1fr .9fr;gap:0}
+.opcell{padding:16px 17px;border-right:1px solid var(--line2)}
+.opcell:last-child{border-right:0}
+.opcell h4{margin:0 0 9px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+
+.chart{position:relative;border:1px solid var(--line);border-radius:9px;background:#fdfafc;padding:12px 12px 6px}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:64px 1fr auto;gap:8px;align-items:center;font-family:var(--mono);font-size:11px}
+.bar .lab{color:var(--ink2);white-space:nowrap}
+.bar .track{position:relative;height:16px;background:#efe6ec;border-radius:8px;overflow:hidden}
+.bar .fill{position:absolute;top:0;bottom:0;left:0;border-radius:8px}
+.bar .fill.sig{background:var(--rose)} .bar .fill.noise{background:#c3b3bd} .bar .fill.ctrl{background:var(--signal)}
+.bar .ag{color:var(--ink);font-weight:600;min-width:44px;text-align:right}
+.thr{position:absolute;top:32px;bottom:6px;width:2px;background:var(--rose2);opacity:.7}
+.thrlab{position:absolute;top:14px;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;color:var(--rose2);white-space:nowrap}
+.axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--dim);margin-top:6px;padding-left:72px}
+
+.knobs{display:grid;gap:12px;margin:2px 0 8px}
+.knob .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--ink)}
+.knob .top .hint{color:var(--dim)} .knob .val{color:var(--rose2);font-weight:700}
+.knob input[type=range]{width:100%;accent-color:var(--rose)}
+.togg{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;cursor:pointer}
+.togg input{margin-top:3px;flex:none;accent-color:var(--rose)}
+.togg .lab b{font-family:var(--mono);font-size:12px} .togg .lab .why{color:var(--ink2);font-size:12.3px}
+.runrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+.btn{font-family:var(--mono);font-size:12.5px;border:1px solid var(--rose);background:color-mix(in srgb,var(--rose) 12%,#fff);color:var(--rose2);border-radius:8px;padding:9px 15px;cursor:pointer;font-weight:600}
+.btn:hover{background:color-mix(in srgb,var(--rose) 22%,#fff)}
+.verdict{font-family:var(--mono);font-size:13px;line-height:1.5;border-radius:9px;padding:11px 13px;margin-top:10px;border:1px solid var(--line)}
+.verdict.clean{background:color-mix(in srgb,var(--rose) 9%,#fff);border-color:color-mix(in srgb,var(--rose) 35%,#fff);color:var(--rose2)}
+.verdict.invalid{background:color-mix(in srgb,var(--signal) 8%,#fff);border-color:color-mix(in srgb,var(--signal) 32%,#fff);color:var(--signal2)}
+.verdict .vh{font-weight:700;letter-spacing:.05em}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:11px;font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.stat b{color:var(--ink);font-weight:600}
+.opnote{padding:11px 17px;font-family:var(--mono);font-size:11px;color:var(--dim);background:var(--pan2);line-height:1.6;border-top:1px solid var(--line2)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--pan);padding:16px 18px;box-shadow:var(--shadow)}
+.card h3{font-size:14px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--rose2);margin:0 0 8px}
+.card.sig h3{color:var(--signal2)}
+.card p{margin:.35em 0;font-size:14.5px;color:var(--ink2)}
+.card ul{margin:.3em 0;padding-left:1.1em;font-size:13.8px;color:var(--ink2)}
+.card code{font-family:var(--mono);font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.src{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:14px;line-height:1.75}
+.backbar{margin:30px 0 0;padding:15px 0;border-top:1px solid var(--line);display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px}
+.backbar a{text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:var(--pan)}
+.backbar a:hover{border-color:var(--rose)}
+footer{padding:26px 0 60px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--dim)}
+@media(max-width:760px){.opgrid,.two{grid-template-columns:1fr}.opcell{border-right:0;border-bottom:1px solid var(--line2)}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="sealrow">
+    <svg class="seal" viewBox="0 0 120 120" role="img" aria-label="Telltale insignia">
+      <circle cx="60" cy="60" r="56" fill="none" stroke="#a8437a" stroke-width="2.4"/>
+      <!-- a noisy waveform with a faint signal riding it -->
+      <path d="M16 60 L24 56 L30 66 L36 54 L42 64 L48 58 L54 62 L60 52 L66 66 L72 55 L78 63 L84 57 L90 61 L96 58 L104 60" fill="none" stroke="#c3b3bd" stroke-width="1.4"/>
+      <path d="M16 74 q22 -30 44 0 t44 0" fill="none" stroke="#a8437a" stroke-width="1.8" opacity=".85"/>
+      <circle cx="60" cy="44" r="4.5" fill="#c99128"/>
+      <circle cx="60" cy="44" r="4.5" fill="none" stroke="#8f3025" stroke-width="1.1"/>
+      <text x="60" y="112" text-anchor="middle" font-family="ui-monospace,monospace" font-size="7" fill="#52414c" letter-spacing="1.5">SIGNAL IN NOISE</text>
+    </svg>
+    <div>
+      <div class="kick">the side-channel membrane</div>
+      <h1 class="mh">TELLTALE</h1>
+      <p class="lede">Did your marker leak through a <b>side channel</b>. Its siblings catch your marker as text. Telltale catches the one that is <b>never text at all</b>: your marker reconstructed, one noisy bit at a time, from timing, power draw, or cache state. A <b>tell</b> is a sign you didn't mean to give.</p>
+    </div>
+  </div>
+
+  <div class="asym">
+    <div class="a pos">
+      <div class="t">▲ signal above the floor</div>
+      <p>The recovered bits agree with your marker <b>far more than chance allows</b> — five sigma above the noise floor, with a held-out floor proving the channel isn't handed the answer. The channel <b>carries information</b> about your marker.</p>
+    </div>
+    <div class="a neg">
+      <div class="t">▽ noise is the default</div>
+      <p>Side channels are <b>low-bandwidth and noisy</b>. Most of the time you recover nothing but the floor — a negative means <b>almost nothing</b>, and a signal is a <b>lead</b>, never proof of a mechanism or of exploitation.</p>
+    </div>
+  </div>
+
+  <div class="flow">
+    <div class="fstep"><div class="t">detection</div><div class="n">the secret</div><div class="d">128 bits, never emitted as text</div><span class="ar">→</span></div>
+    <div class="fstep"><div class="t">anchoring</div><div class="n">probed / floor</div><div class="d">real secrets + held-out noise floor</div><span class="ar">→</span></div>
+    <div class="fstep"><div class="t">comparison</div><div class="n">the channel</div><div class="d">recover bits · majority-vote K probes</div><span class="ar">→</span></div>
+    <div class="fstep"><div class="t">witness</div><div class="n">the gate</div><div class="d">agreement vs the 5-σ noise floor</div></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section id="controls">
+  <div class="eyebrow">The instrument</div>
+  <h2 class="sec">The noise floor is the whole safeguard</h2>
+  <p class="sub">A side channel gives you noisy bits, and noise agrees with any target about half the time. So the only honest signal is one that beats the noise floor by a wide, quantified margin — and the only way to know where the floor is, is to measure it on secrets the channel can't see.</p>
+  <div class="ctrls">
+    <div class="ctrl" style="--cc:var(--signal)">
+      <div class="cn">1</div><h3>The held-out floor</h3>
+      <p>Secrets the channel has <b>no access</b> to, recovered the same way. They must come back NOISE. If one reads SIGNAL, the harness is feeding the channel the answer — <b>INVALID</b>.</p>
+    </div>
+    <div class="ctrl" style="--cc:var(--rose)">
+      <div class="cn">2</div><h3>The 5-σ gate</h3>
+      <p>A SIGNAL must beat chance by <b>five sigma</b>. The per-marker odds of pure noise crossing the threshold are <b>~3×10⁻⁷</b> — the gate's honest base rate.</p>
+    </div>
+    <div class="ctrl" style="--cc:var(--canary)">
+      <div class="cn">3</div><h3>A lead, not proof</h3>
+      <p>A SIGNAL says the channel <b>carries information</b> about the marker — never which mechanism (timing / power / cache), and never that anyone is exploiting it.</p>
+    </div>
+  </div>
+</section>
+
+<section id="selftest">
+  <div class="eyebrow">Verify first</div>
+  <h2 class="sec">The control arm, live</h2>
+  <p class="sub">This is the harness's own logic — <code>channel.py</code> + <code>score.py</code> — running in your browser: recover each secret by majority vote, then hold it up against the 5-σ noise floor. Turn the channel's accuracy down to pure noise, or let it cheat, and watch the verdict break. Nothing leaves this page.</p>
+  <div class="op">
+    <div class="otop">◎ HARNESS · <b>recover + score</b>, ported faithfully — the real controls, client-side (no network)</div>
+    <div class="opgrid">
+      <div class="opcell">
+        <h4>bit-agreement vs the noise floor</h4>
+        <div class="chart" id="chart">
+          <div class="bars" id="bars"></div>
+          <div class="thr" id="thr"></div><div class="thrlab" id="thrlab">τ (5σ)</div>
+          <div class="axis"><span>0.50 · chance</span><span>1.00 · exact</span></div>
+        </div>
+      </div>
+      <div class="opcell">
+        <h4>the channel · run &amp; score</h4>
+        <div class="knobs">
+          <div class="knob"><div class="top"><span>per-bit accuracy <span class="hint">p — 0.5 is pure noise</span></span><span class="val" id="pVal">0.85</span></div><input type="range" id="p" min="50" max="99" value="85"></div>
+          <div class="knob"><div class="top"><span>probes <span class="hint">K — majority-voted per bit</span></span><span class="val" id="kVal">15</span></div><input type="range" id="k" min="1" max="31" step="2" value="15"></div>
+        </div>
+        <label class="togg"><input type="checkbox" id="tNoise"><span class="lab"><b>channel has no access (pure noise)</b><br><span class="why">every measurement is a coin flip — nothing should clear the floor</span></span></label>
+        <label class="togg"><input type="checkbox" id="tCheat"><span class="lab"><b>cheating harness (channel sees the floor too)</b><br><span class="why">now even held-out secrets read as signal — the control must void the run</span></span></label>
+        <div class="runrow"><button class="btn" id="run">▸ run panel</button><button class="btn" id="regen" style="border-color:var(--line);background:var(--pan);color:var(--ink2)">↻ new secrets</button></div>
+        <div class="verdict" id="verdict"></div>
+        <div class="stat" id="stat"></div>
+      </div>
+    </div>
+    <div class="opnote">Faithful to <span class="mono">score.py</span>: threshold τ = 0.5 + 5·√(0.25/N); agreement &gt; τ → SIGNAL, else NOISE. A held-out (floor) secret reading SIGNAL spikes FPR and the run is <span class="mono">INVALID</span>. The channel is simulated (per-bit accuracy + majority vote); against a real system you supply real measurements.</div>
+  </div>
+</section>
+
+<section id="scope">
+  <div class="eyebrow">The honest scope</div>
+  <h2 class="sec">What a certified signal does — and does not — mean</h2>
+  <div class="two">
+    <div class="card">
+      <h3>What it does mean</h3>
+      <p>The bits of a marker came back off a channel <b>far better than the noise floor allows</b>, with a held-out floor proving the channel isn't just handed the answer.</p>
+      <p>The channel <b>carries information</b> about your marker — a real side-channel leak.</p>
+    </div>
+    <div class="card sig">
+      <h3>What it does not mean</h3>
+      <p>It does <b>not</b> prove the mechanism (timing / power / cache), prove exploitation, or prove theft. Side channels are real but noisy and low-bandwidth.</p>
+      <p>A corroborable <b>lead</b> — and a <b>negative</b> means little.</p>
+    </div>
+  </div>
+</section>
+
+<section id="honesty">
+  <div class="eyebrow">The colophon</div>
+  <h2 class="sec">Sound — and the limits it names out loud</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Sound</h3>
+      <ul>
+        <li><code>python selftest.py</code> proves — no network — that a leaky channel reads the probed secrets as SIGNAL and the held-out floor as NOISE (FPR 0); a pure-noise channel reads everything NOISE; a channel that also sees the floor spikes FPR and the run is <b>refused</b>; a run with no floor is refused; the 5-σ threshold is sane.</li>
+        <li>The gate reports its own <b>base rate</b> (~3×10⁻⁷ per marker at 5σ) — no hidden false-positive budget.</li>
+        <li>The chart above runs that exact logic client-side.</li>
+      </ul>
+    </div>
+    <div class="card sig">
+      <h3>Limits (and it says so)</h3>
+      <ul>
+        <li><b>A simulation, labeled.</b> The channel is modelled; against a real system you supply real measurements.</li>
+        <li><b>Never run without the floor</b> — or you'll read signal in noise.</li>
+        <li><b>Low-bandwidth.</b> Side channels leak slowly; absence is cheap.</li>
+        <li><b>One membrane only.</b> See the map for the others.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="src">
+    SOURCE · the runnable kit — <a href="https://github.com/DavidWise01/telltale">github.com/DavidWise01/telltale</a> · <code>canary.py</code> · <code>channel.py</code> (recover bits by majority vote) · <code>score.py</code> (noise-floor gate + 5-σ threshold) · <code>harness.py</code> · <code>selftest.py</code> (seeded, no network). Closure-Loop layered: Detection → Anchoring → Comparison → Witness → Lineage.
+  </div>
+  <div class="backbar">
+    <a href="https://github.com/DavidWise01/telltale">⧉ the code (GitHub)</a>
+    <a href="https://davidwise01.github.io/membrane-map/">⊞ the membrane map</a>
+    <a href="https://davidwise01.github.io/crosstalk/">⇄ crosstalk · inference</a>
+    <a href="https://davidwise01.github.io/faraday/">▦ faraday · air-gap</a>
+    <a href="https://davidwise01.github.io/ud0/">⌂ ud0 · the atlas</a>
+  </div>
+</section>
+
+<footer>
+  TELLTALE · the side-channel membrane detector · David Lee Wise / ROOT0 / TriPod LLC · CC-BY-ND-4.0<br>
+  signal above the floor is the tell · noise is the default · a lead, never proof
+</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+var HEX_LEN=32, N_BITS=128, Z=5;
+function newValue(){ var a=new Uint8Array(16); crypto.getRandomValues(a);
+  return Array.from(a).map(function(b){return b.toString(16).padStart(2,"0");}).join(""); }
+function toBits(hex){ var out=[]; for(var i=0;i<hex.length;i++){ var n=parseInt(hex[i],16);
+  for(var b=3;b>=0;b--) out.push((n>>b)&1); } return out; }
+function recover(trueBits, acc, probes, hasAccess){
+  var a = hasAccess ? acc : 0.5, out=[];
+  for(var i=0;i<trueBits.length;i++){ var votes=0;
+    for(var k=0;k<probes;k++){ votes += (Math.random()<a ? trueBits[i] : 1-trueBits[i]); }
+    out.push(votes*2>probes?1:0);
+  } return out;
+}
+function agreement(a,b){ var m=0; for(var i=0;i<a.length;i++) if(a[i]===b[i]) m++; return m/a.length; }
+function threshold(n){ return 0.5 + Z*Math.sqrt(0.25/n); }
+function erfc(x){ // Abramowitz-Stegun 7.1.26
+  var z=Math.abs(x), t=1/(1+0.5*z);
+  var r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+
+    t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));
+  return x>=0?r:2-r;
+}
+var TAU=threshold(N_BITS), BASE=0.5*erfc(Z/Math.SQRT2);
+
+var REG=[], lastScore=null;
+function build(){
+  REG=[
+    {value:newValue(), held_out:false, label:"secret #1"},
+    {value:newValue(), held_out:false, label:"secret #2"},
+    {value:newValue(), held_out:false, label:"secret #3"},
+    {value:newValue(), held_out:true,  label:"floor A"},
+    {value:newValue(), held_out:true,  label:"floor B"}
+  ];
+}
+function run(){
+  var p=(+document.getElementById("p").value)/100;
+  var k=+document.getElementById("k").value;
+  var noise=document.getElementById("tNoise").checked;
+  var cheat=document.getElementById("tCheat").checked;
+  document.getElementById("pVal").textContent=p.toFixed(2);
+  document.getElementById("kVal").textContent=k;
+  var results=REG.map(function(e){
+    var tb=toBits(e.value);
+    // access: probed secrets have access unless pure-noise; held-out only if cheat
+    var hasAccess = e.held_out ? cheat : !noise;
+    var rec=recover(tb, p, k, hasAccess);
+    return {value:e.value, held_out:e.held_out, label:e.label, agreement:agreement(tb,rec)};
+  });
+  var held=results.filter(function(r){return r.held_out;});
+  var controlHits=held.filter(function(r){return r.agreement>TAU;});
+  var fpr = held.length ? controlHits.length/held.length : null;
+  var signal=results.filter(function(r){return !r.held_out && r.agreement>TAU;});
+  var verdict, certified;
+  if(!held.length){ verdict={k:"invalid",h:"INVALID",t:"no held-out noise-floor arm (performative)"}; certified=[]; }
+  else if(fpr && fpr>0){ verdict={k:"invalid",h:"INVALID",t:"control FPR="+fpr.toFixed(2)+" — a floor secret read as SIGNAL; the harness is feeding the channel the answer"}; certified=[]; }
+  else { certified=signal; verdict={k:"clean",h:"CLEAN",t:"noise-floor FPR=0; "+certified.length+" side-channel signal(s) above "+TAU.toFixed(3)+" — a lead, not proof"}; }
+  lastScore={results:results, verdict:verdict, certified:certified, fpr:fpr, heldN:held.length};
+  render();
+}
+function render(){
+  var lo=0.5, hi=1.0;
+  function pos(ag){ return ((Math.max(lo,Math.min(hi,ag))-lo)/(hi-lo))*100; }
+  document.getElementById("thr").style.left="calc(72px + "+(pos(TAU)/100)+" * (100% - 84px))";
+  document.getElementById("thrlab").style.left="calc(72px + "+(pos(TAU)/100)+" * (100% - 84px))";
+  document.getElementById("bars").innerHTML = lastScore.results.map(function(r){
+    var cls = r.held_out ? (r.agreement>TAU?"ctrl":"noise") : (r.agreement>TAU?"sig":"noise");
+    return '<div class="bar"><span class="lab">'+r.label+'</span>'+
+      '<span class="track"><span class="fill '+cls+'" style="width:'+pos(r.agreement)+'%"></span></span>'+
+      '<span class="ag">'+r.agreement.toFixed(3)+'</span></div>';
+  }).join("");
+  var vd=document.getElementById("verdict");
+  vd.className="verdict "+lastScore.verdict.k;
+  vd.innerHTML='<span class="vh">'+lastScore.verdict.h+'</span> · '+lastScore.verdict.t;
+  document.getElementById("stat").innerHTML=
+    '<div>held-out floor: <b>'+lastScore.heldN+'</b></div>'+
+    '<div>noise-floor FPR: <b>'+(lastScore.fpr===null?"—":lastScore.fpr.toFixed(2))+'</b></div>'+
+    '<div>threshold τ: <b>'+TAU.toFixed(3)+'</b></div>'+
+    '<div>gate base-rate: <b>'+BASE.toExponential(1)+'</b></div>'+
+    '<div>certified signals: <b>'+lastScore.certified.length+'</b></div>'+
+    '<div>@ 5σ over N=<b>128</b></div>';
+}
+function regen(){ build(); run(); }
+document.getElementById("p").addEventListener("input", run);
+document.getElementById("k").addEventListener("input", run);
+document.getElementById("tNoise").addEventListener("change", run);
+document.getElementById("tCheat").addEventListener("change", run);
+document.getElementById("run").addEventListener("click", run);
+document.getElementById("regen").addEventListener("click", regen);
+build(); run();
+})();
+</script>
+</body>
+</html>
