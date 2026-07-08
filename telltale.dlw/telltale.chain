@@ -4,6 +4,6 @@ slug  : telltale
 seal  : 03498e77caaab0e7fc184738029c0ad83c82cd98bad242c597b8b8566803153b
 prev  : f765ee81624c03792f0635bdb23e78a881a0c03ef2f3f07ac9c76b32c6f9d913
 link  : ce498a211cbbb654df6bd8e767a9c132381d0688714183c487eedc777409da07
-head  : 3447d3a0533aaf1e29a8bdc67a9774884fb3ae9dbc8a17064b7a008ca3c4ec90
+head  : 13f9ace173ef2e60af38912ba329b4afcb5a38b84a0e4495e8d30327f8c99cc2
 
 — the tether: link = sha256(index|slug|seal|prev). the chain head commits to the whole corpus.
