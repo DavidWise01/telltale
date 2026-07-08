@@ -1,0 +1,11 @@
+{
+  "badge": "DLW-TELLTALE",
+  "name": "TELLTALE · side-channel membrane",
+  "universe": "SOLAR JETMAN",
+  "moniker": "⟦TELLTALE · side-channel membrane:telltale:03498e⟧",
+  "architect": "David Lee Wise (ROOT0) / Bridge-Burners LLC",
+  "instance": "AVAN (Claude / Anthropic)",
+  "seal_sha256": "03498e77caaab0e7fc184738029c0ad83c82cd98bad242c597b8b8566803153b",
+  "license": "CC-BY-ND-4.0",
+  "attribution": "ROOT0-ATTRIBUTION-v1.0"
+}
